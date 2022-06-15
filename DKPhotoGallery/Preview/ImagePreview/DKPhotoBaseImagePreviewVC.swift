@@ -71,26 +71,48 @@ open class DKPhotoBaseImagePreviewVC: DKPhotoBasePreviewVC {
                 })
             }
         }
-        
-        PHPhotoLibrary.requestAuthorization { (status) in
-            DispatchQueue.main.async(execute: {
-                switch status {
-                case .authorized:
-                    if let imageData = contentView.gifImage?.imageData {
-                        saveImage(with: imageData)
-                    } else if let imageURL = self.item.imageURL, imageURL.isFileURL, let data = try? Data(contentsOf: imageURL) {
-                        saveImage(with: data)
-                    } else if let image = contentView.image {
-                        UIImageWriteToSavedPhotosAlbum(image, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
+        if #available(iOS 14.0, *) {
+            PHPhotoLibrary.requestAuthorization(for: .addOnly) { (status) in
+                DispatchQueue.main.async(execute: {
+                    switch status {
+                    case .authorized:
+                        if let imageData = contentView.gifImage?.imageData {
+                            saveImage(with: imageData)
+                        } else if let imageURL = self.item.imageURL, imageURL.isFileURL, let data = try? Data(contentsOf: imageURL) {
+                            saveImage(with: data)
+                        } else if let image = contentView.image {
+                            UIImageWriteToSavedPhotosAlbum(image, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
+                        }
+                    case .restricted:
+                        fallthrough
+                    case .denied:
+                        self.showTips(DKPhotoGalleryResource.localizedStringWithKey("preview.image.saveImage.permission.error"))
+                    default:
+                        break
                     }
-                case .restricted:
-                    fallthrough
-                case .denied:
-                    self.showTips(DKPhotoGalleryResource.localizedStringWithKey("preview.image.saveImage.permission.error"))
-                default:
-                    break
-                }
-            })
+                })
+            }
+        } else {
+            PHPhotoLibrary.requestAuthorization { (status) in
+                DispatchQueue.main.async(execute: {
+                    switch status {
+                    case .authorized:
+                        if let imageData = contentView.gifImage?.imageData {
+                            saveImage(with: imageData)
+                        } else if let imageURL = self.item.imageURL, imageURL.isFileURL, let data = try? Data(contentsOf: imageURL) {
+                            saveImage(with: data)
+                        } else if let image = contentView.image {
+                            UIImageWriteToSavedPhotosAlbum(image, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
+                        }
+                    case .restricted:
+                        fallthrough
+                    case .denied:
+                        self.showTips(DKPhotoGalleryResource.localizedStringWithKey("preview.image.saveImage.permission.error"))
+                    default:
+                        break
+                    }
+                })
+            }
         }
     }
     
