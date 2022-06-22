@@ -71,6 +71,15 @@ open class DKPhotoBaseImagePreviewVC: DKPhotoBasePreviewVC {
                 })
             }
         }
+        func saveImageAlbum(with image: UIImage) {
+            PHPhotoLibrary.shared().performChanges {
+                PHAssetChangeRequest.creationRequestForAsset(from: image)
+            } completionHandler: { (success, error) in
+                DispatchQueue.main.async(execute: {
+                    self.showImageSaveResult(with: error)
+                })
+            }
+        }
         if #available(iOS 14.0, *) {
             PHPhotoLibrary.requestAuthorization(for: .addOnly) { (status) in
                 DispatchQueue.main.async(execute: {
@@ -81,7 +90,7 @@ open class DKPhotoBaseImagePreviewVC: DKPhotoBasePreviewVC {
                         } else if let imageURL = self.item.imageURL, imageURL.isFileURL, let data = try? Data(contentsOf: imageURL) {
                             saveImage(with: data)
                         } else if let image = contentView.image {
-                            UIImageWriteToSavedPhotosAlbum(image, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
+                            saveImageAlbum(with: image)
                         }
                     case .restricted:
                         fallthrough
@@ -102,7 +111,7 @@ open class DKPhotoBaseImagePreviewVC: DKPhotoBasePreviewVC {
                         } else if let imageURL = self.item.imageURL, imageURL.isFileURL, let data = try? Data(contentsOf: imageURL) {
                             saveImage(with: data)
                         } else if let image = contentView.image {
-                            UIImageWriteToSavedPhotosAlbum(image, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
+                            saveImageAlbum(with: image)
                         }
                     case .restricted:
                         fallthrough
@@ -114,10 +123,6 @@ open class DKPhotoBaseImagePreviewVC: DKPhotoBasePreviewVC {
                 })
             }
         }
-    }
-    
-    @objc func image(_ image: UIImage, didFinishSavingWithError error: NSError?, contextInfo: UnsafeRawPointer) {
-        self.showImageSaveResult(with: error)
     }
     
     func showImageSaveResult(with error: Error?) {
